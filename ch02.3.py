@@ -1,35 +1,12 @@
-import os
-import tarfile
-from six.moves import urllib
- 
-DOWNLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
-HOUSING_PATH = os.path.join("datasets", "housing")
-HOUSING_URL = DOWNLOAD_ROOT + "datasets/housing/housing.tgz"
- 
-def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
-    if not os.path.isdir(housing_path):
-        os.makedirs(housing_path)
-    tgz_path = os.path.join(housing_path, "housing.tgz")
-    urllib.request.urlretrieve(housing_url, tgz_path)
-    housing_tgz = tarfile.open(tgz_path)
-    housing_tgz.extractall(path=housing_path)
-    housing_tgz.close()
-
 import pandas as pd
 import numpy as np
 import mglearn, os
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import image
+import image, housingModule
  
-def load_housing_data(housing_path=HOUSING_PATH):
-    csv_path = os.path.join(housing_path, "housing.csv")
-    return pd.read_csv(csv_path)
-
-# 최초 한번 실행
-# fetch_housing_data()
-housing = load_housing_data()
+housing = housingModule.load_housing_data()
 print("housing.head", housing.head())
 print("housing.info", housing.info())
 print("housing.describe", housing.describe())
@@ -39,9 +16,8 @@ print("housing.describe", housing.describe())
 # 중간 소득 median income
 # 중간 주택 연도 housing median age
 # 중간 주택 가격 median house value
-
 housing.hist(bins=50, figsize=(20,15))
-plt.title("housing Histogram Plot")
+plt.title("모든 숫자형 특성에 대한 히스토그램")
 image.save_fig("housing_histogram_plot")   
 plt.show()
 
@@ -58,7 +34,7 @@ def split_train_test(data, test_ratio):
 train_set, test_set = split_train_test(housing, 0.2)
 print(len(train_set), "train +", len(test_set), "test")
 
-# 항상 같은 난수 인덱스가 생성되도록 np.random.permutation()을 호출하기 전에 난수 발생기의 초기값을 지정
+# 항상 같은 난수 인덱스가 생성되도록 np.random.permutation() 을 호출하기 전에 난수 발생기의 초기값을 지정
 # 식별자의 해시값을 계산하여 해시의 마지막 바이트의 값이 51(256의 20% 정도)보다 작거나 같은 샘플만 테스트 세트
 from zlib import crc32
 def test_set_check(identifier, test_ratio):
@@ -81,7 +57,7 @@ from sklearn.model_selection import train_test_split
 train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 
 # 미국 인구의 51.3%가 여성이고 48.7%가 남성이라면, 잘 구성된 설문조사는 샘플에서도 이 비율을 유지해야 합니다. 
-# 즉, 여성은 513명, 남성은 487명이어야 합니다. 이를 계층적 샘플링stratified sampling이라고 합니다. 
+# 즉, 여성은 513명, 남성은 487명이어야 합니다. 이를 계층적 샘플링 stratified sampling 이라고 합니다. 
 # 전체 모수는 계층strata이라는 동질의 그룹으로 나뉘고, 테스트 세트가 전체 모수를 대표하도록 
 # 각 계층에서 올바른 수의 샘플을 추출
 
@@ -93,11 +69,13 @@ train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 
 housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
 housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
+print(housing["income_cat"].value_counts() / len(housing))
 
 housing["income_cat"].hist(bins=10, figsize=(5,5))
-plt.title("housing income_cat Histogram Plot")
+plt.title("소득 카테고리의 히스토그램")
 image.save_fig("housing_income_cat_histogram_plot")   
 plt.show()
+
 
 # 소득 카테고리를 기반으로 계층 샘플링을 할 준비가 되었습니다. 
 # 사이킷런의 StratifiedShuffleSplit를 사용할 수 있습니다.

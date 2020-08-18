@@ -4,16 +4,12 @@ import mglearn, os
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import image
+import image, housingModule
 
-HOUSING_PATH = os.path.join("datasets", "housing")
-def load_housing_data(housing_path=HOUSING_PATH):
-    csv_path = os.path.join(housing_path, "housing.csv")
-    return pd.read_csv(csv_path)
-
-housing = load_housing_data()
+housing = housingModule.load_housing_data()
 print("housing.head", housing.head())
 print("housing.info", housing.info())
+print("type", type(housing)) # DataFrame
 print("housing.describe", housing.describe())
 
 # 전문가가 중간 소득이 중간 주택 가격을 예측하는 데 매우 중요하다고 이야기해주었다고 가정
@@ -21,7 +17,6 @@ print("housing.describe", housing.describe())
 # 소득 대부분은 $20,000~$50,000 사이에 모여 있지만 일부는 $60,000를 넘기도 합니다. 
 # 계층별로 데이터셋에 충분한 샘플 수가 있어야 합니다. 
 # 그렇지 않으면 계층의 중요도를 추정하는 데 편향이 발생
-
 housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
 housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
 
@@ -32,8 +27,7 @@ plt.show()
 
 # 소득 카테고리를 기반으로 계층 샘플링을 할 준비가 되었습니다. 
 # 사이킷런의 StratifiedShuffleSplit를 사용할 수 있습니다.
-from sklearn.model_selection import StratifiedShuffleSplit
- 
+from sklearn.model_selection import StratifiedShuffleSplit 
 split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 for train_index, test_index in split.split(housing, housing["income_cat"]):
     strat_train_set = housing.loc[train_index]
@@ -83,6 +77,7 @@ plt.title("산점도 행렬")
 image.save_fig("housing_correlations")   
 plt.show()
 
+# 
 housing.plot(kind="scatter", x="median_income", y="median_house_value", alpha=0.1)
 plt.title("중간 소득 대 중간 주택 가격")
 image.save_fig("housing_median_income_median_house_value_scatter")   
@@ -101,7 +96,7 @@ print(corr_matrix["median_house_value"].sort_values(ascending=False))
 attributes = ["median_house_value", "rooms_per_household", "bedrooms_per_room", "population_per_household"]
 scatter_matrix(housing[attributes], figsize=(12, 8))
 plt.title("산점도 행렬")
-image.save_fig("housing_correlations2")   
+image.save_fig("housing_add_features_correlations")   
 plt.show()
 
 

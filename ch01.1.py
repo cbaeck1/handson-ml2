@@ -15,7 +15,8 @@ print("gdp_per_capita 크기: {}".format(gdp_per_capita.shape))
 country_stats = housingModule.prepare_country_stats(oecd_bli, gdp_per_capita)
 print("country_stats 크기: {}".format(country_stats.shape))
 
-X = np.c_[country_stats["GDP per capita"]]
+# X = np.c_[country_stats["GDP per capita"]]
+X = country_stats[["GDP per capita"]]
 y = pd.Series(country_stats["Life satisfaction"])
 print("X 크기: {}".format(X.shape))
 print("y 크기: {}".format(y.shape))
@@ -30,17 +31,18 @@ image.save_fig("life_satisfaction_gdp_per_capita_scatter")
 plt.show()
 
 # 선형 모델 선택
+# X : numpy 배열 또는 형태의 희소 행렬 [n_samples, n_features]
 from sklearn.linear_model import LinearRegression 
-# lm = LinearRegression().fit(X, y)
+lm = LinearRegression().fit(X, y)
 # 모델 훈련
 # Exception has occurred: ValueError illegal value in 4-th argument of internal None
-# print("lm.coef_: {}".format(lm.coef_))
-# print("lm.intercept_: {}".format(lm.intercept_))
-# print("2. 선형모델 : 최소제곱 훈련 세트 점수: {:.2f}".format(lm.score(X, y)))
+print("lm.coef_: {}".format(lm.coef_))
+print("lm.intercept_: {}".format(lm.intercept_))
+print("2. 선형모델 : 최소제곱 훈련 세트 점수: {:.2f}".format(lm.score(X, y)))
 
 # 키프로스에 대한 예측
 X_new = [[22587]]  # 키프로스 1인당 GDP
-# print(lm.predict(X_new)) # 결과 [[5.96242338]]
+print(lm.predict(X_new)) # 결과 [[5.96242338]]
 
 # 선형 회귀 모델을 k-최근접 이웃 회귀 모델로 교체할 경우
 import sklearn.neighbors

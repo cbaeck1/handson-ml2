@@ -4,11 +4,9 @@ from six.moves import urllib
 import pandas as pd
 import numpy as np
  
-DOWNLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
+DOWNLOAD_HOUSING = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
 HOUSING_PATH = os.path.join("datasets", "housing")
-HOUSING_URL = DOWNLOAD_ROOT + "datasets/housing/housing.tgz"
-OECD_BLI_PATH = os.path.join("datasets", "lifesat")
- 
+HOUSING_URL = DOWNLOAD_HOUSING + "datasets/housing/housing.tgz"
 def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
     if not os.path.isdir(housing_path):
         os.makedirs(housing_path)
@@ -17,6 +15,17 @@ def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
     housing_tgz = tarfile.open(tgz_path)
     housing_tgz.extractall(path=housing_path)
     housing_tgz.close()
+
+DOWNLOAD_BLI = "https://raw.githubusercontent.com/rickiepark/handson-ml2/master/"
+OECD_BLI_PATH = os.path.join("datasets", "lifesat")
+def fetch_bli_data(oecd_bli_path=OECD_BLI_PATH):
+    if not os.path.isdir(oecd_bli_path):
+        os.makedirs(oecd_bli_path, exist_ok=True)
+    for filename in ("oecd_bli_2015.csv", "gdp_per_capita.csv"):
+        print("Downloading", filename)
+        url = DOWNLOAD_BLI + "datasets/lifesat/" + filename
+        urllib.request.urlretrieve(url, oecd_bli_path + filename)
+
 
 def load_housing_data(housing_path=HOUSING_PATH):
     csv_path = os.path.join(housing_path, "housing.csv")

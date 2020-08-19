@@ -7,6 +7,7 @@ import numpy as np
 DOWNLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
 HOUSING_PATH = os.path.join("datasets", "housing")
 HOUSING_URL = DOWNLOAD_ROOT + "datasets/housing/housing.tgz"
+OECD_BLI_PATH = os.path.join("datasets", "lifesat")
  
 def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
     if not os.path.isdir(housing_path):
@@ -20,6 +21,42 @@ def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
 def load_housing_data(housing_path=HOUSING_PATH):
     csv_path = os.path.join(housing_path, "housing.csv")
     return pd.read_csv(csv_path)
+
+def load_oecd_bli_data(oecd_bli_path=OECD_BLI_PATH):
+    csv_path = os.path.join(oecd_bli_path, "oecd_bli_2015.csv")
+    return pd.read_csv(csv_path, thousands=',')
+
+def load_lifesat_data(oecd_bli_path=OECD_BLI_PATH):
+    csv_path = os.path.join(oecd_bli_path, "lifesat.csv")
+    return pd.read_csv(csv_path, thousands=',')
+
+def load_gdp_per_capita_data(oecd_bli_path=OECD_BLI_PATH):
+    csv_path = os.path.join(oecd_bli_path, "gdp_per_capita.csv")
+    return pd.read_csv(csv_path, thousands=',', delimiter='\t', encoding='latin1', na_values="n/a")
+
+# OECD의 삶의 만족도(life satisfaction) 데이터와 IMF의 1인당 GDP(GDP per capita) 데이터
+def prepare_country_stats(oecd_bli, gdp_per_capita):
+    oecd_bli = oecd_bli[oecd_bli["INEQUALITY"]=="TOT"]
+    oecd_bli = oecd_bli.pivot(index="Country", columns="Indicator", values="Value")
+    gdp_per_capita.rename(columns={"2015": "GDP per capita"}, inplace=True)
+    gdp_per_capita.set_index("Country", inplace=True)
+    full_country_stats = pd.merge(left=oecd_bli, right=gdp_per_capita,
+                                  left_index=True, right_index=True)
+    full_country_stats.sort_values(by="GDP per capita", inplace=True)
+    remove_indices = [0, 1, 6, 8, 33, 34, 35]
+    keep_indices = list(set(range(36)) - set(remove_indices))
+    return full_country_stats[["GDP per capita", 'Life satisfaction']].iloc[keep_indices]
+
+# OECD의 삶의 만족도(life satisfaction) 데이터와 IMF의 1인당 GDP(GDP per capita) 데이터
+def prepare_full_country_stats(oecd_bli, gdp_per_capita):
+    oecd_bli = oecd_bli[oecd_bli["INEQUALITY"]=="TOT"]
+    oecd_bli = oecd_bli.pivot(index="Country", columns="Indicator", values="Value")
+    gdp_per_capita.rename(columns={"2015": "GDP per capita"}, inplace=True)
+    gdp_per_capita.set_index("Country", inplace=True)
+    full_country_stats = pd.merge(left=oecd_bli, right=gdp_per_capita,
+                                  left_index=True, right_index=True)
+    full_country_stats.sort_values(by="GDP per capita", inplace=True)
+    return full_country_stats
 
 # 나만의 변환기
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -56,3 +93,35 @@ if __name__ == "__main__":
   print("housing.head", housing.head())
   print("housing.info", housing.info())
   print("housing.describe", housing.describe())
+
+  oecd_bli = load_oecd_bli_data()
+  print("oecd_bli.head", oecd_bli.head())
+  print("oecd_bli.info", oecd_bli.info())
+  print("oecd_bli.describe", oecd_bli.describe())
+
+  lifesat = load_lifesat_data()
+  print("lifesat.head", lifesat.head())
+  print("lifesat.info", lifesat.info())
+  print("lifesat.describe", lifesat.describe())
+
+  gdp_per_capita = load_gdp_per_capita_data()
+  print("gdp_per_capita.head", gdp_per_capita.head())
+  print("gdp_per_capita.info", gdp_per_capita.info())
+  print("gdp_per_capita.describe", gdp_per_capita.describe())
+
+  country_stats = prepare_country_stats(oecd_bli, gdp_per_capita)
+  print("country_stats.head", country_stats.head())
+  print("country_stats.info", country_stats.info())
+  print("country_stats.describe", country_stats.describe())    
+
+
+
+
+
+
+
+
+
+
+
+

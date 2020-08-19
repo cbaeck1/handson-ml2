@@ -60,7 +60,10 @@ full_pipeline = FeatureUnion(transformer_list=[
     ])
 
 housing_prepared = full_pipeline.fit_transform(housing)
-print(housing_prepared.shape, type(housing_prepared))
+print("housing_prepared.shape: {}".format(housing_prepared.shape))
+print("housing_labels.shape: {}".format(housing_labels.shape))
+print("housing_prepared 타입: {}".format(type(housing_prepared)))
+print("housing_labels 타입: {}".format(type(housing_labels)))
 
 # 훈련 세트에서 훈련하고 평가하기
 # 선형 회귀 모델
@@ -119,9 +122,14 @@ display_scores(tree_rmse_scores)
 from sklearn.ensemble import RandomForestRegressor
 forest_reg = RandomForestRegressor()
 forest_reg.fit(housing_prepared, housing_labels)
-print(forest_rmse)
+housing_predictions = forest_reg.predict(housing_prepared)
+forest_mse = mean_squared_error(housing_labels, housing_predictions)
+forest_rmse = np.sqrt(forest_mse)
+print("랜덤 포레스트 RMSE:", forest_rmse)
 
 # 그리드 탐색
+# 탐색하고자 하는 하이퍼파라미터와 시도해볼 값을 지정
+# 가능한 모든 하이퍼파라미터 조합에 대해 교차 검증을 사용해 평가
 from sklearn.model_selection import GridSearchCV
 param_grid = [
         {'n_estimators': [3, 10, 30], 'max_features': [2, 4, 6, 8]},
@@ -132,6 +140,55 @@ grid_search = GridSearchCV(forest_reg, param_grid, cv=5,
                            scoring='neg_mean_squared_error',
                            return_train_score=True)
 grid_search.fit(housing_prepared, housing_labels)
+
+# 더 세밀하게 탐색하려면 위 예제의 n_estimators 하이퍼파라미터처럼 더 작은 값을 지정
+# param_grid 설정에 따라 사이킷런이 
+# 먼저 첫 번째 dict에 있는 n_estimators와 max_features 하이퍼파라미터의 조합인 3 × 4 = 12개를 평가
+# 두 번째 dict에 있는 하이퍼파라미터의 조합인 2 × 3 = 6개를 시도
+# 모두 합하면 그리드 탐색이 RandomForestRegressor 하이퍼파라미터 값의 12 + 6 = 18 개 조합을 탐색하고,
+# 각각 다섯 번 모델을 훈련시킵니다 (5-겹 교차 검증을 사용하기 때문에).
+# 다시 말해 전체 훈련 횟수는 18 × 5 = 90 이 됩니다! 
+# 이는 시간이 꽤 오래 걸리지만 다음과 같이 최적의 조합을 얻을 수 있습니다.
+print(grid_search.best_params_, grid_search.best_estimator_)
+
+RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None,
+        max_features=8, max_leaf_nodes=None, min_impurity_split=1e-07,
+        min_samples_leaf=1, min_samples_split=2,
+        min_weight_fraction_leaf=0.0, n_estimators=30, n_jobs=1,
+        oob_score=False, random_state=42, verbose=0, warm_start=False)
+
+cvres = grid_search.cv_results_
+for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+    print(np.sqrt(-mean_score), params)
+# 이 예에서는 max_features 하이퍼파라미터가 8, n_estimators 하이퍼파라미터가 30일 때 최적의 솔루션입니다. 
+# 이때 RMSE 점수가 49,694로 앞서 기본 하이퍼파라미터 설정으로 얻은 52,564점보다 조금 더 좋습니다
+
+
+# 랜덤 탐색
+# 앙상블 방법
+# 최상의 모델과 오차 분석
+feature_importances = grid_search.best_estimator_.feature_importances_
+print(feature_importances)
+
+extra_attribs = ["rooms_per_hhold", "pop_per_hhold", "bedrooms_per_room"]
+cat_one_hot_attribs = list(encoder.classes_)
+attributes = num_attribs + extra_attribs + cat_one_hot_attribs
+sorted(zip(feature_importances, attributes), reverse=True)
+
+# 테스트 세트로 시스템 평가하기
+final_model = grid_search.best_estimator_
+ 
+X_test = strat_test_set.drop("median_house_value", axis=1)
+y_test = strat_test_set["median_house_value"].copy()
+ 
+X_test_prepared = full_pipeline.transform(X_test)
+ 
+final_predictions = final_model.predict(X_test_prepared)
+ 
+final_mse = mean_squared_error(y_test, final_predictions)
+final_rmse = np.sqrt(final_mse) # => 47,766.0 출력
+
+
 
 
 
